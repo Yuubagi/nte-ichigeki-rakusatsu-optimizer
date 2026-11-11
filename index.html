@@ -209,7 +209,7 @@
   /* 表のアイコン。画像があるアイテムは画像、ないアイテムは、盤面と同じ色の四角に名前の1文字目を重ねる */
   .ico {
     flex: none; width: 32px; height: 32px; border-radius: 5px;
-    background-color: var(--c, var(--empty)); background-repeat: no-repeat; background-size: 400% 500%; /* img/icons.webp は4列×5行 */
+    background-color: var(--c, var(--empty)); background-repeat: no-repeat; background-size: 400% 600%; /* img/icons.webp は4列×6行 */
     display: flex; align-items: center; justify-content: center;
     color: #fff; font-size: 15px; font-weight: 600; line-height: 1; overflow: hidden;
   }
@@ -1022,7 +1022,7 @@ function runSolver(payload, report) {
   const MAX_REVENUE = 1e12; // 展示収益として受け付ける最大値(これを超える入力は、不備として扱う)
 
   // 初期の表を増やしたら、そのときのゲームのバージョンにする(保存済みの表に、あとから増えた分を案内するために使う)
-  const DEFAULTS_VERSION = '1.4';
+  const DEFAULTS_VERSION = '1.5';
   const BASE_VERSION = '1.3'; // 公開時の表のバージョン。版を保存していない古いデータは、これとして扱う
 
   // 初期のアイテム表(名前, 展示収益, 縦, 横, 画像の番号, 追加されたゲームのバージョン)。
@@ -1033,8 +1033,11 @@ function runSolver(payload, report) {
     ['翠刃', 1797, 1, 3, 17, '1.4'],
     ['蒼天の碧波', 2247, 2, 2, 2],
     ['ハイパーディスク', 1024, 1, 2, 3],
+    ['パークチョコレート', 2333, 3, 2, 21, '1.5'],
     ['夜光杯', 3360, 3, 3, 18, '1.4'],
+    ['ウォッチャー', 1100, 3, 1, 22, '1.5'],
     ['金の錦鯉像', 4533, 4, 4, 4],
+    ['家庭用プロジェクター', 3210, 4, 3, 20, '1.5'],
     ['古いブリーフケース', 1155, 2, 3, 5],
     ['Pendragon模型', 4034, 5, 5, 6],
     ['オールフィッシュ', 600, 4, 1, 7],
@@ -1163,7 +1166,7 @@ function runSolver(payload, report) {
   const IMG_NO_BY_NAME = new Map(DEFAULT_ROWS.map((r) => [r[0], r[4]]));
   const imgNoOf = (name) => IMG_NO_BY_NAME.get(baseName(name)) || 0;
   const SPRITE_COLS = 4; // img/icons.webp は、4列×5行に並べた1枚の画像
-  const SPRITE_ROWS = 5;
+  const SPRITE_ROWS = 6;
   const saveData = !!(navigator.connection && navigator.connection.saveData); // 通信量を抑える設定
   if (saveData) document.documentElement.classList.add('no-img');
 
