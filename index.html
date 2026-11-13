@@ -249,6 +249,9 @@
   .item-tabs [aria-selected="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
   .catalog-search { display:block; max-width:420px; margin:16px 0; }
   .catalog-search input { margin-top:4px; }
+  .catalog-options { display:flex; align-items:center; gap:8px; margin:12px 0; cursor:pointer; width:fit-content; }
+  .catalog-options input { width:18px; height:18px; accent-color:var(--accent); }
+  #catalogGrid:not(.show-details) .catalog-detail { display:none; }
   .catalog-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; margin-top:14px; }
   .catalog-card { min-width:0; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px; }
   .catalog-card .namecell { align-items:center; font-weight:600; overflow-wrap:anywhere; }
@@ -400,6 +403,7 @@
   <div id="catalogPanel" role="tabpanel" aria-labelledby="catalogTab">
     <p class="hint">「所持アイテムに追加」を押すたびに、所持数が1個ずつ増えます。</p>
     <label class="catalog-search" for="catalogSearch">アイテム名で検索<input id="catalogSearch" type="text" placeholder="例：夜光杯" autocomplete="off"></label>
+    <label class="catalog-options"><input type="checkbox" id="showCatalogDetails" aria-controls="catalogGrid">詳細を表示</label>
     <p class="hint" id="catalogCount"></p>
     <div class="catalog-grid" id="catalogGrid"></div>
     <p class="hint" id="catalogNoMatch" hidden>該当するアイテムがありません。</p>
@@ -1371,6 +1375,9 @@ function runSolver(payload, report) {
   }
   $('#browseItems').addEventListener('click', () => { selectItemTab('catalog'); $('#catalogSearch').focus(); });
   $('#catalogSearch').addEventListener('input', renderCatalog);
+  $('#showCatalogDetails').addEventListener('change', (e) => {
+    $('#catalogGrid').classList.toggle('show-details', e.target.checked);
+  });
 
   function renderCatalog() {
     const query = $('#catalogSearch').value.trim().normalize('NFKC').toLocaleLowerCase('ja');
@@ -1380,7 +1387,7 @@ function runSolver(payload, report) {
       const counts = matching.map((it) => parseIntStrict(it.owned));
       const ownedLabel = matching.some((it) => it.owned.trim() === '') ? '無制限' :
         counts.some((n) => n === null) ? '要確認' : `${fmt(counts.reduce((sum, n) => sum + n, 0))}個`;
-      return `<article class="catalog-card"><div class="namecell"><span class="ico" data-ico="${r[4]}" aria-hidden="true" style="background-position:${iconPos(r[4])}">${esc(firstChar(r[0]))}</span><span>${esc(r[0])}</span></div><dl><dt>展示収益</dt><dd>${fmt(r[1])}</dd><dt>サイズ（縦×横）</dt><dd>${r[2]} × ${r[3]}</dd><dt>展示効率</dt><dd>${fmt(r[1] / (r[2] * r[3]))}</dd><dt>所持数</dt><dd data-owned-count>${ownedLabel}</dd></dl><button type="button" class="btn primary" data-catalog="${i}" aria-label="${esc(r[0])}を所持アイテムに1個追加">所持アイテムに追加</button></article>`;
+      return `<article class="catalog-card"><div class="namecell"><span class="ico" data-ico="${r[4]}" aria-hidden="true" style="background-position:${iconPos(r[4])}">${esc(firstChar(r[0]))}</span><span>${esc(r[0])}</span></div><dl><dt class="catalog-detail">展示収益</dt><dd class="catalog-detail">${fmt(r[1])}</dd><dt class="catalog-detail">サイズ（縦×横）</dt><dd class="catalog-detail">${r[2]} × ${r[3]}</dd><dt class="catalog-detail">展示効率</dt><dd class="catalog-detail">${fmt(r[1] / (r[2] * r[3]))}</dd><dt>所持数</dt><dd data-owned-count>${ownedLabel}</dd></dl><button type="button" class="btn primary" data-catalog="${i}" aria-label="${esc(r[0])}を所持アイテムに1個追加">所持アイテムに追加</button></article>`;
     }).join('');
     $('#catalogCount').textContent = `${visible.length} / ${ALL_ORANGE_ROWS.length}種類`;
     $('#catalogNoMatch').hidden = visible.length !== 0;
