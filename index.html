@@ -382,6 +382,9 @@
   <section class="items-section" aria-labelledby="itemsHeading">
   <h2 id="itemsHeading">アイテムの表</h2>
   <div class="update" id="update" hidden aria-live="polite"></div>
+  <p class="hint">展示収益が確認できる橙品質39種類をまとめて追加できます。登録済みの行は変更せず、追加分の所持数は0にします。</p>
+  <p class="hint"><button type="button" class="btn" id="addAllOrange">橙品質の全アイテムを追加（39種）</button> <a href="https://ddangcalc.com/ja/items" target="_blank" rel="noopener noreferrer">データ出典：NTE一撃落札DB</a>（2026年11月13日確認）</p>
+  <p class="hint" id="presetMsg" role="status"></p>
   <div class="sticky-bar">
     <div class="toolbar">
       <button type="button" class="btn" id="addRow" aria-label="アイテムを追加"><span class="lg" aria-hidden="true">アイテムを追加</span><span class="sm" aria-hidden="true">追加</span></button>
@@ -1050,6 +1053,51 @@ function runSolver(payload, report) {
     ['ティアドロップ', 100, 1, 1, 14],
     ['携帯用ディスプレイ', 485, 2, 3, 15],
     ['鳴り玉', 157, 1, 2, 16],
+  ];
+
+  // 橙品質の全39種。出典: https://ddangcalc.com/ja/items (2026-11-13確認)
+  // 各詳細ページの陳列棚の1時間あたり収益を使用。売却価格からの推算はしない。
+  // 名前, 展示収益, 縦, 横。既存データと同じく、名前の外側のかぎかっこは省く。
+  const ALL_ORANGE_ROWS = [
+    ["金の錦鯉像", 4533, 4, 4], // red_01
+    ["Pendragon模型", 4034, 5, 5], // red_02
+    ["エターナルハート", 1314, 1, 1], // red_03
+    ["古いブリーフケース", 1155, 2, 3], // red_04
+    ["未知のカードキー", 730, 2, 3], // red_05
+    ["オールフィッシュ", 600, 4, 1], // red_06
+    ["ゆらめく鬼火", 520, 3, 3], // red_07
+    ["九種盛りオードブル", 478, 3, 3], // red_08
+    ["携帯用ディスプレイ", 485, 2, 3], // red_09
+    ["永久花冠", 400, 2, 2], // red_10
+    ["蓮紋の花瓶", 204, 3, 1], // red_11
+    ["輝く翡翠", 162, 4, 2], // red_12
+    ["トートUSB", 150, 1, 2], // red_13
+    ["幾何学", 123, 1, 1], // red_14
+    ["混沌の核", 123, 1, 1], // red_15
+    ["K01模型", 118, 4, 4], // red_16
+    ["鯨の歌", 104, 4, 4], // red_17
+    ["ティアドロップ", 100, 1, 1], // red_18
+    ["揺星", 63, 2, 2], // red_19
+    ["サクサク天丼", 60, 1, 2], // red_20
+    ["蒼天の碧波", 2247, 2, 2], // red_21
+    ["輝眼の権能", 577, 1, 5], // red_22
+    ["他山の石", 300, 2, 1], // red_23
+    ["鳴り玉", 157, 1, 2], // red_24
+    ["ハイパーディスク", 1024, 1, 2], // red_25
+    ["かっらららてぃあお", 280, 2, 1], // red_26
+    ["サクポテ・アラモード", 161, 3, 2], // red_27
+    ["ブタの貯金箱", 1000, 5, 5], // red_28
+    ["新品の限定バレーボール", 177, 2, 2], // red_29
+    ["トントンハンマー", 200, 3, 3], // red_30
+    ["夜光杯", 3360, 3, 3], // red_31
+    ["煙雲の盃", 1000, 1, 1], // red_32
+    ["古びた置時計", 301, 5, 2], // red_33
+    ["翠刃", 1797, 1, 3], // red_34
+    ["家庭用ゲーム機", 238, 4, 3], // red_35
+    ["とっておきのピザ", 59, 1, 3], // red_36
+    ["ウォッチャー", 1100, 3, 1], // red_37
+    ["パークチョコレート", 2333, 3, 2], // red_38
+    ["家庭用プロジェクター", 3210, 4, 3], // red_39
   ];
 
   const $ = (sel) => document.querySelector(sel);
@@ -1728,9 +1776,25 @@ function runSolver(payload, report) {
     renderTable();
   });
 
+  $('#addAllOrange').addEventListener('click', () => {
+    const have = new Set(state.items.map((it) => baseName(it.name)));
+    const missing = ALL_ORANGE_ROWS.filter((r) => !have.has(baseName(r[0])));
+    if (!missing.length) {
+      $('#presetMsg').textContent = '橙品質39種類はすべて登録済みです。';
+      return;
+    }
+    for (const r of missing) state.items.push(newItem(r[0], r[1], r[2], r[3], '0'));
+    save();
+    renderTable();
+    showUpdateNote();
+    markStale();
+    $('#presetMsg').textContent = `${missing.length}種類を追加しました。追加したアイテムの所持数は0です。持っている数を入力してください。登録済みの行と所持数はそのままです。`;
+  });
+
   $('#resetRows').addEventListener('click', () => {
     if (!confirm('アイテムの表を初期の状態に戻します。入力した所持数も消えます。よろしいですか?')) return;
     state = defaultState();
+    $('#presetMsg').textContent = '';
     save();
     renderTable();
     showUpdateNote();
