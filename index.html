@@ -209,11 +209,11 @@
   /* 表のアイコン。画像があるアイテムは画像、ないアイテムは、盤面と同じ色の四角に名前の1文字目を重ねる */
   .ico {
     flex: none; width: 32px; height: 32px; border-radius: 5px;
-    background-color: var(--c, var(--empty)); background-repeat: no-repeat; background-size: 400% 600%; /* img/icons.webp は4列×6行 */
+    background-color: var(--c, var(--empty)); background-repeat: no-repeat; background-size: 400% 1000%; /* img/icons.webp は4列×10行 */
     display: flex; align-items: center; justify-content: center;
     color: #fff; font-size: 15px; font-weight: 600; line-height: 1; overflow: hidden;
   }
-  .ico[data-ico] { background-color: #692322; background-image: url("img/icons.webp"); font-size: 0; } /* 読み込み中は、アイコンの背景と同じ色 */
+  .ico[data-ico] { background-color: #692322; background-image: url("img/icons.webp?v=39"); font-size: 0; } /* 読み込み中は、アイコンの背景と同じ色 */
   .no-img .ico[data-ico] { background-color: var(--c); background-image: none; font-size: 15px; } /* 画像を出さない環境では、色と1文字にする */
   .ico.sm { width: 24px; height: 24px; font-size: 12px; }
   .bd-name { display: flex; align-items: center; gap: 8px; }
@@ -1057,47 +1057,47 @@ function runSolver(payload, report) {
 
   // 橙品質の全39種。出典: https://ddangcalc.com/ja/items (2026-11-13確認)
   // 各詳細ページの陳列棚の1時間あたり収益を使用。売却価格からの推算はしない。
-  // 名前, 展示収益, 縦, 横。既存データと同じく、名前の外側のかぎかっこは省く。
+  // 名前, 展示収益, 縦, 横, 画像番号。名前の外側のかぎかっこは省く。
   const ALL_ORANGE_ROWS = [
-    ["金の錦鯉像", 4533, 4, 4], // red_01
-    ["Pendragon模型", 4034, 5, 5], // red_02
-    ["エターナルハート", 1314, 1, 1], // red_03
-    ["古いブリーフケース", 1155, 2, 3], // red_04
-    ["未知のカードキー", 730, 2, 3], // red_05
-    ["オールフィッシュ", 600, 4, 1], // red_06
-    ["ゆらめく鬼火", 520, 3, 3], // red_07
-    ["九種盛りオードブル", 478, 3, 3], // red_08
-    ["携帯用ディスプレイ", 485, 2, 3], // red_09
-    ["永久花冠", 400, 2, 2], // red_10
-    ["蓮紋の花瓶", 204, 3, 1], // red_11
-    ["輝く翡翠", 162, 4, 2], // red_12
-    ["トートUSB", 150, 1, 2], // red_13
-    ["幾何学", 123, 1, 1], // red_14
-    ["混沌の核", 123, 1, 1], // red_15
-    ["K01模型", 118, 4, 4], // red_16
-    ["鯨の歌", 104, 4, 4], // red_17
-    ["ティアドロップ", 100, 1, 1], // red_18
-    ["揺星", 63, 2, 2], // red_19
-    ["サクサク天丼", 60, 1, 2], // red_20
-    ["蒼天の碧波", 2247, 2, 2], // red_21
-    ["輝眼の権能", 577, 1, 5], // red_22
-    ["他山の石", 300, 2, 1], // red_23
-    ["鳴り玉", 157, 1, 2], // red_24
-    ["ハイパーディスク", 1024, 1, 2], // red_25
-    ["かっらららてぃあお", 280, 2, 1], // red_26
-    ["サクポテ・アラモード", 161, 3, 2], // red_27
-    ["ブタの貯金箱", 1000, 5, 5], // red_28
-    ["新品の限定バレーボール", 177, 2, 2], // red_29
-    ["トントンハンマー", 200, 3, 3], // red_30
-    ["夜光杯", 3360, 3, 3], // red_31
-    ["煙雲の盃", 1000, 1, 1], // red_32
-    ["古びた置時計", 301, 5, 2], // red_33
-    ["翠刃", 1797, 1, 3], // red_34
-    ["家庭用ゲーム機", 238, 4, 3], // red_35
-    ["とっておきのピザ", 59, 1, 3], // red_36
-    ["ウォッチャー", 1100, 3, 1], // red_37
-    ["パークチョコレート", 2333, 3, 2], // red_38
-    ["家庭用プロジェクター", 3210, 4, 3], // red_39
+    ["金の錦鯉像", 4533, 4, 4, 4], // red_01
+    ["Pendragon模型", 4034, 5, 5, 6], // red_02
+    ["エターナルハート", 1314, 1, 1, 1], // red_03
+    ["古いブリーフケース", 1155, 2, 3, 5], // red_04
+    ["未知のカードキー", 730, 2, 3, 11], // red_05
+    ["オールフィッシュ", 600, 4, 1, 7], // red_06
+    ["ゆらめく鬼火", 520, 3, 3, 23], // red_07
+    ["九種盛りオードブル", 478, 3, 3, 24], // red_08
+    ["携帯用ディスプレイ", 485, 2, 3, 15], // red_09
+    ["永久花冠", 400, 2, 2, 13], // red_10
+    ["蓮紋の花瓶", 204, 3, 1, 25], // red_11
+    ["輝く翡翠", 162, 4, 2, 26], // red_12
+    ["トートUSB", 150, 1, 2, 27], // red_13
+    ["幾何学", 123, 1, 1, 9], // red_14
+    ["混沌の核", 123, 1, 1, 10], // red_15
+    ["K01模型", 118, 4, 4, 28], // red_16
+    ["鯨の歌", 104, 4, 4, 29], // red_17
+    ["ティアドロップ", 100, 1, 1, 14], // red_18
+    ["揺星", 63, 2, 2, 30], // red_19
+    ["サクサク天丼", 60, 1, 2, 31], // red_20
+    ["蒼天の碧波", 2247, 2, 2, 2], // red_21
+    ["輝眼の権能", 577, 1, 5, 12], // red_22
+    ["他山の石", 300, 2, 1, 8], // red_23
+    ["鳴り玉", 157, 1, 2, 16], // red_24
+    ["ハイパーディスク", 1024, 1, 2, 3], // red_25
+    ["かっらららてぃあお", 280, 2, 1, 32], // red_26
+    ["サクポテ・アラモード", 161, 3, 2, 33], // red_27
+    ["ブタの貯金箱", 1000, 5, 5, 34], // red_28
+    ["新品の限定バレーボール", 177, 2, 2, 35], // red_29
+    ["トントンハンマー", 200, 3, 3, 36], // red_30
+    ["夜光杯", 3360, 3, 3, 18], // red_31
+    ["煙雲の盃", 1000, 1, 1, 19], // red_32
+    ["古びた置時計", 301, 5, 2, 37], // red_33
+    ["翠刃", 1797, 1, 3, 17], // red_34
+    ["家庭用ゲーム機", 238, 4, 3, 38], // red_35
+    ["とっておきのピザ", 59, 1, 3, 39], // red_36
+    ["ウォッチャー", 1100, 3, 1, 22], // red_37
+    ["パークチョコレート", 2333, 3, 2, 21], // red_38
+    ["家庭用プロジェクター", 3210, 4, 3, 20], // red_39
   ];
 
   const $ = (sel) => document.querySelector(sel);
@@ -1207,14 +1207,14 @@ function runSolver(payload, report) {
   }
 
   /* ---------- 画像(飾り) ---------- */
-  // 画像は、初期の16アイテムだけに、名前で紐づける。画像がなくても、色と名前の表示で、同じように使える。
+  // 画像は、橙品質39種類に、名前で紐づける。画像がなくても、色と名前の表示で、同じように使える。
   // 画像がないアイテムは、アイテムごとの色の四角に、名前(または1文字目)を出す。
   // 名前の前後の空白と、かぎかっこ(「」『』)を除いた形。ゲーム内の表記(「エターナルハート」など)で入力しても、同じアイテムとして扱う
   const baseName = (name) => String(name).trim().replace(/^[「『]+|[」』]+$/g, '').trim();
-  const IMG_NO_BY_NAME = new Map(DEFAULT_ROWS.map((r) => [r[0], r[4]]));
+  const IMG_NO_BY_NAME = new Map([...DEFAULT_ROWS, ...ALL_ORANGE_ROWS].map((r) => [r[0], r[4]]));
   const imgNoOf = (name) => IMG_NO_BY_NAME.get(baseName(name)) || 0;
-  const SPRITE_COLS = 4; // img/icons.webp は、4列×5行に並べた1枚の画像
-  const SPRITE_ROWS = 6;
+  const SPRITE_COLS = 4; // img/icons.webp は、4列×10行に並べた1枚の画像
+  const SPRITE_ROWS = 10;
   const saveData = !!(navigator.connection && navigator.connection.saveData); // 通信量を抑える設定
   if (saveData) document.documentElement.classList.add('no-img');
 
@@ -1259,7 +1259,7 @@ function runSolver(payload, report) {
     if (saveData) return;
     const sp = new Image();
     sp.onerror = () => document.documentElement.classList.add('no-img');
-    sp.src = 'img/icons.webp';
+    sp.src = 'img/icons.webp?v=39';
   }
 
   // 盤面の画像。読み込み中は、画像の枠と同じ色の四角(文字なし)にする。読み込めなかったときは、色と名前(または1文字)にする
