@@ -245,7 +245,11 @@
   .stale { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-  .item-tabs { display:flex; gap:8px; border-bottom:1px solid var(--line); margin:16px 0; padding-bottom:8px; }
+  .items-actions { display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--line); margin:16px 0; padding-bottom:8px; }
+  .item-tabs { display:flex; gap:8px; min-width:0; }
+  .items-actions .btn { white-space:nowrap; }
+  .items-actions > #solveBtn { margin-left:auto; flex-shrink:0; }
+  @media (max-width:640px) { .items-actions, .item-tabs { gap:4px; } .items-actions .btn { font-size:12px; padding:8px 6px; } }
   .item-tabs [aria-selected="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
   .catalog-search { display:block; max-width:420px; margin:16px 0; }
   .catalog-search input { margin-top:4px; }
@@ -424,9 +428,12 @@
 
   <section class="items-section" aria-labelledby="itemsHeading">
   <h2 id="itemsHeading">アイテム</h2>
+  <div class="items-actions">
   <div class="item-tabs" role="tablist" aria-label="アイテムの管理">
     <button type="button" class="btn" id="catalogTab" role="tab" aria-controls="catalogPanel" aria-selected="true">アイテム一覧</button>
     <button type="button" class="btn" id="ownedTab" role="tab" aria-controls="ownedPanel" aria-selected="false" tabindex="-1">所持アイテム（0）</button>
+  </div>
+  <button type="button" class="btn primary" id="solveBtn">計算する</button>
   </div>
   <p class="hint" id="inventoryMsg" role="status"></p>
   <div id="catalogPanel" role="tabpanel" aria-labelledby="catalogTab">
@@ -454,7 +461,6 @@
     <div class="toolbar">
       <button type="button" class="btn" id="sortRows" aria-label="効率の高い順に並べる"><span class="lg" aria-hidden="true">効率の高い順に並べる</span><span class="sm" aria-hidden="true">効率順</span></button>
       <button type="button" class="btn quiet" id="resetRows" aria-label="所持アイテムを空にする"><span class="lg" aria-hidden="true">すべて削除</span><span class="sm" aria-hidden="true">全削除</span></button>
-      <button type="button" class="btn primary push" id="solveBtn">計算する</button>
     </div>
   </div>
   <div class="tablewrap">
