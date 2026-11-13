@@ -439,6 +439,7 @@
         <option value="rev-desc">展示収益が高い順</option><option value="rev-asc">展示収益が低い順</option><option value="name">名前順</option>
       </select></label>
       <div class="view-switch" role="group" aria-label="一覧の表示形式"><button type="button" class="btn" id="cardView" aria-pressed="true">カード</button><button type="button" class="btn" id="listView" aria-pressed="false">リスト</button></div>
+      <button type="button" class="btn" id="addRow">アイテム追加</button>
     </div>
     <label class="catalog-options"><input type="checkbox" id="showCatalogDetails" aria-controls="catalogGrid">詳細を表示</label>
     <p class="hint" id="catalogCount"></p>
@@ -451,7 +452,6 @@
   <div class="inventory-empty" id="ownedEmpty" hidden><p>所持アイテムはまだありません。</p><button type="button" class="btn" id="browseItems">アイテム一覧から追加する</button></div>
   <div class="sticky-bar">
     <div class="toolbar">
-      <button type="button" class="btn" id="addRow" aria-label="独自アイテムを追加"><span class="lg" aria-hidden="true">独自アイテムを追加</span><span class="sm" aria-hidden="true">追加</span></button>
       <button type="button" class="btn" id="sortRows" aria-label="効率の高い順に並べる"><span class="lg" aria-hidden="true">効率の高い順に並べる</span><span class="sm" aria-hidden="true">効率順</span></button>
       <button type="button" class="btn quiet" id="resetRows" aria-label="所持アイテムを空にする"><span class="lg" aria-hidden="true">すべて削除</span><span class="sm" aria-hidden="true">全削除</span></button>
       <button type="button" class="btn primary push" id="solveBtn">計算する</button>
@@ -1885,6 +1885,7 @@ function runSolver(payload, report) {
     state.items.push(it);
     save();
     renderTable();
+    selectItemTab('owned');
     rows.get(it.id).querySelector('input').focus();
   });
 
