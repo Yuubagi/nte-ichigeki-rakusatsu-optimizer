@@ -286,7 +286,7 @@
   .c-size { width: 66px; }
   .c-cells { width: 74px; }
   .c-eff { width: 80px; }
-  .c-owned { width: 100px; }
+  .c-owned { width: 160px; }
   .c-del { width: 64px; }
   td.auto { color: var(--muted); }
   input[aria-invalid="true"] { border-color: var(--warn); }
@@ -349,6 +349,35 @@
     table.items td:nth-child(7) { grid-column: 3 / 5; }
   }
 
+
+  .catalog-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+  .catalog-toolbar label { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .catalog-toolbar select { font:inherit; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:7px 9px; max-width:100%; }
+  .view-switch { display:flex; gap:4px; }
+  .view-switch [aria-pressed="true"] { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
+  .quantity-control { display:flex; gap:4px; align-items:center; justify-content:space-between; margin-top:auto; }
+  .quantity-control .btn { width:36px; min-height:36px; flex:0 0 36px; margin:0; padding:4px; font-size:20px; line-height:1; }
+  .quantity-control [data-owned-count] { flex:1; min-width:0; text-align:center; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+  .quantity-control input { min-width:0; flex:1; text-align:center; }
+  .quantity-control .btn:disabled { opacity:.45; cursor:default; }
+  #catalogGrid:not(.show-details) .catalog-stats { display:none; }
+  .catalog-grid.list-view { grid-template-columns:1fr; gap:8px; }
+  .list-view .catalog-card { display:grid; grid-template-columns:minmax(0,1fr) 142px; align-items:center; gap:8px 16px; }
+  .list-view .catalog-card .namecell { flex-direction:row; align-items:center; gap:10px; }
+  .list-view .catalog-card .ico { width:36px; height:36px; }
+  .list-view .quantity-control { grid-column:2; grid-row:1; margin:0; }
+  .list-view .catalog-stats { grid-column:1 / -1; grid-row:2; max-width:400px; }
+  @media (max-width:640px) {
+    .list-view .catalog-card { grid-template-columns:minmax(0,1fr) 116px; gap:8px; }
+    .list-view .catalog-card .ico { width:28px; height:28px; }
+    .list-view .catalog-card .namecell { gap:6px; font-size:13px; }
+    table.items td:nth-child(2) { grid-column:1 / 3; grid-row:2; }
+    table.items td:nth-child(3) { grid-column:3 / 5; grid-row:2; }
+    table.items td:nth-child(4) { grid-column:1 / 3; grid-row:3; }
+    table.items td:nth-child(5) { grid-column:3 / 5; grid-row:3; }
+    table.items td.auto { grid-row:4; }
+  }
+
   footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
   footer p { margin: 4px 0; }
   footer a { color: var(--accent); }
@@ -401,8 +430,16 @@
   </div>
   <p class="hint" id="inventoryMsg" role="status"></p>
   <div id="catalogPanel" role="tabpanel" aria-labelledby="catalogTab">
-    <p class="hint">「所持アイテムに追加」を押すたびに、所持数が1個ずつ増えます。</p>
+    <p class="hint">＋／−ボタンで所持数を1個ずつ変更できます。</p>
     <label class="catalog-search" for="catalogSearch">アイテム名で検索<input id="catalogSearch" type="text" placeholder="例：夜光杯" autocomplete="off"></label>
+    <div class="catalog-toolbar">
+      <label for="catalogSort">並べ替え <select id="catalogSort">
+        <option value="default">標準順</option><option value="eff-desc">効率が高い順</option><option value="eff-asc">効率が低い順</option>
+        <option value="area-desc">大きい順（マス数）</option><option value="area-asc">小さい順（マス数）</option>
+        <option value="rev-desc">展示収益が高い順</option><option value="rev-asc">展示収益が低い順</option><option value="name">名前順</option>
+      </select></label>
+      <div class="view-switch" role="group" aria-label="一覧の表示形式"><button type="button" class="btn" id="cardView" aria-pressed="true">カード</button><button type="button" class="btn" id="listView" aria-pressed="false">リスト</button></div>
+    </div>
     <label class="catalog-options"><input type="checkbox" id="showCatalogDetails" aria-controls="catalogGrid">詳細を表示</label>
     <p class="hint" id="catalogCount"></p>
     <div class="catalog-grid" id="catalogGrid"></div>
@@ -1379,15 +1416,51 @@ function runSolver(payload, report) {
     $('#catalogGrid').classList.toggle('show-details', e.target.checked);
   });
 
+  // 表示設定だけを、所持データとは別に保存する。
+  const CATALOG_PREFS_KEY = 'exhibit-catalog-view-v1';
+  let catalogView = 'card';
+  try {
+    const prefs = JSON.parse(localStorage.getItem(CATALOG_PREFS_KEY) || '{}');
+    if ([...$('#catalogSort').options].some((o) => o.value === prefs.sort)) $('#catalogSort').value = prefs.sort;
+    if (prefs.view === 'list') catalogView = 'list';
+  } catch (e) { /* 保存できない環境でも使える */ }
+  function applyCatalogView() {
+    $('#catalogGrid').classList.toggle('list-view', catalogView === 'list');
+    $('#cardView').setAttribute('aria-pressed', String(catalogView === 'card'));
+    $('#listView').setAttribute('aria-pressed', String(catalogView === 'list'));
+  }
+  function saveCatalogPrefs() {
+    try { localStorage.setItem(CATALOG_PREFS_KEY, JSON.stringify({ sort: $('#catalogSort').value, view: catalogView })); } catch (e) { /* 保存不可 */ }
+  }
+  $('#catalogSort').addEventListener('change', () => { renderCatalog(); saveCatalogPrefs(); });
+  for (const view of ['card', 'list']) $('#' + view + 'View').addEventListener('click', () => {
+    catalogView = view;
+    applyCatalogView();
+    saveCatalogPrefs();
+  });
+  applyCatalogView();
+
+  function ownedLabelFor(items) {
+    if (items.some((it) => it.owned.trim() === '')) return '無制限';
+    const counts = items.map((it) => parseIntStrict(it.owned));
+    return counts.some((n) => n === null) ? '要確認' : `${fmt(counts.reduce((sum, n) => sum + n, 0))}個`;
+  }
+  function stepOwned(it, delta) {
+    it.owned = String(Math.max(0, (parseIntStrict(it.owned) ?? 0) + delta));
+  }
   function renderCatalog() {
     const query = $('#catalogSearch').value.trim().normalize('NFKC').toLocaleLowerCase('ja');
     const visible = ALL_ORANGE_ROWS.map((r, i) => ({ r, i })).filter(({ r }) => r[0].normalize('NFKC').toLocaleLowerCase('ja').includes(query));
+    const sort = $('#catalogSort').value;
+    const value = (r) => sort.startsWith('eff-') ? r[1] / (r[2] * r[3]) : sort.startsWith('area-') ? r[2] * r[3] : r[1];
+    if (sort !== 'default') visible.sort((a, b) => {
+      const diff = sort === 'name' ? a.r[0].localeCompare(b.r[0], 'ja') : (value(a.r) - value(b.r)) * (sort.endsWith('-desc') ? -1 : 1);
+      return diff || a.i - b.i;
+    });
     $('#catalogGrid').innerHTML = visible.map(({ r, i }) => {
       const matching = state.items.filter((it) => baseName(it.name) === baseName(r[0]));
-      const counts = matching.map((it) => parseIntStrict(it.owned));
-      const ownedLabel = matching.some((it) => it.owned.trim() === '') ? '無制限' :
-        counts.some((n) => n === null) ? '要確認' : `${fmt(counts.reduce((sum, n) => sum + n, 0))}個`;
-      return `<article class="catalog-card"><div class="namecell"><span class="ico" data-ico="${r[4]}" aria-hidden="true" style="background-position:${iconPos(r[4])}">${esc(firstChar(r[0]))}</span><span>${esc(r[0])}</span></div><dl><dt class="catalog-detail">展示収益</dt><dd class="catalog-detail">${fmt(r[1])}</dd><dt class="catalog-detail">サイズ（縦×横）</dt><dd class="catalog-detail">${r[2]} × ${r[3]}</dd><dt class="catalog-detail">展示効率</dt><dd class="catalog-detail">${fmt(r[1] / (r[2] * r[3]))}</dd><dt>所持数</dt><dd data-owned-count>${ownedLabel}</dd></dl><button type="button" class="btn primary" data-catalog="${i}" aria-label="${esc(r[0])}を所持アイテムに1個追加">所持アイテムに追加</button></article>`;
+      const label = ownedLabelFor(matching);
+      return `<article class="catalog-card"><div class="namecell"><span class="ico" data-ico="${r[4]}" aria-hidden="true" style="background-position:${iconPos(r[4])}">${esc(firstChar(r[0]))}</span><span>${esc(r[0])}</span></div><dl class="catalog-stats"><dt class="catalog-detail">展示収益</dt><dd class="catalog-detail">${fmt(r[1])}</dd><dt class="catalog-detail">サイズ（縦×横）</dt><dd class="catalog-detail">${r[2]} × ${r[3]}</dd><dt class="catalog-detail">展示効率</dt><dd class="catalog-detail">${fmt(r[1] / (r[2] * r[3]))}</dd></dl><div class="quantity-control" role="group" aria-label="${esc(r[0])}の所持数"><button type="button" class="btn" data-catalog="${i}" data-delta="-1" aria-label="${esc(r[0])}を1個減らす"${label === '0個' ? ' disabled' : ''}>−</button><span data-owned-count aria-label="所持数">${label}</span><button type="button" class="btn primary" data-catalog="${i}" data-delta="1" aria-label="${esc(r[0])}を1個増やす">＋</button></div></article>`;
     }).join('');
     $('#catalogCount').textContent = `${visible.length} / ${ALL_ORANGE_ROWS.length}種類`;
     $('#catalogNoMatch').hidden = visible.length !== 0;
@@ -1396,23 +1469,23 @@ function runSolver(payload, report) {
   }
   $('#catalogGrid').addEventListener('click', (e) => {
     const button = e.target.closest('button[data-catalog]');
-    if (!button) return;
+    if (!button || button.disabled) return;
     const r = ALL_ORANGE_ROWS[Number(button.dataset.catalog)];
     if (!r) return;
-    const existing = state.items.find((it) => baseName(it.name) === baseName(r[0]));
-    if (existing) {
-      const count = parseIntStrict(existing.owned);
-      existing.owned = String((count ?? 0) + 1);
-    } else {
-      state.items.push(newItem(r[0], r[1], r[2], r[3], '1'));
-    }
+    const delta = Number(button.dataset.delta);
+    const matching = state.items.filter((it) => baseName(it.name) === baseName(r[0]));
+    const existing = delta > 0 ? matching[0] : matching.find((it) => parseIntStrict(it.owned) !== 0);
+    if (existing) stepOwned(existing, delta);
+    else if (delta > 0) state.items.push(newItem(r[0], r[1], r[2], r[3], '1'));
+    else return;
     save();
     renderTable();
     markStale();
-    const total = state.items.find((it) => baseName(it.name) === baseName(r[0])).owned;
-    $('#inventoryMsg').textContent = `${r[0]}を1個追加しました（所持数${fmt(total)}個）。`;
-    // 同じボタンを続けて押せるように、再描画後もフォーカスを保持する。
-    $(`#catalogGrid button[data-catalog="${button.dataset.catalog}"]`).focus({ preventScroll: true });
+    const label = ownedLabelFor(state.items.filter((it) => baseName(it.name) === baseName(r[0])));
+    $('#inventoryMsg').textContent = `${r[0]}の所持数を${label}に変更しました。`;
+    const selector = `#catalogGrid button[data-catalog="${button.dataset.catalog}"]`;
+    const same = $(`${selector}[data-delta="${delta}"]`);
+    (same.disabled ? $(`${selector}[data-delta="1"]`) : same).focus({ preventScroll: true });
   });
 
   /* ---------- アイテム表の描画 ---------- */
@@ -1424,6 +1497,9 @@ function runSolver(payload, report) {
       input.setAttribute('aria-invalid', String(p.status === 'bad' && p.errors.has(input.dataset.f)));
     });
     setIcon(tr.querySelector('.ico'), it.name, it.id);
+    tr.querySelector('[data-act="decrement"]').disabled = parseIntStrict(it.owned) === 0;
+    tr.querySelector('[data-act="decrement"]').setAttribute('aria-label', `${nameOf(it.name)}を1個減らす`);
+    tr.querySelector('[data-act="increment"]').setAttribute('aria-label', `${nameOf(it.name)}を1個増やす`);
     tr.querySelector('[data-act="del"]').setAttribute('aria-label', `${nameOf(it.name.trim())}の行を削除`);
     tr.querySelector('[data-role="cells"]').textContent = p.status === 'ok' ? p.a : '';
     tr.querySelector('[data-role="eff"]').textContent = p.status === 'ok' ? (p.rev / p.a).toFixed(1) : '';
@@ -1437,7 +1513,7 @@ function runSolver(payload, report) {
       tr.dataset.id = it.id;
       tr.innerHTML = `
         <td data-label="アイテム名"><div class="namecell"><span class="ico" aria-hidden="true"></span><input type="text" enterkeyhint="next" data-f="name" aria-label="アイテム名" autocomplete="off" value="${esc(it.name)}"></div></td>
-        <td class="c-owned" data-label="所持数"><input type="text" inputmode="numeric" enterkeyhint="next" data-f="owned" aria-label="所持数" placeholder="無制限" autocomplete="off" value="${esc(it.owned)}"></td>
+        <td class="c-owned" data-label="所持数"><div class="quantity-control"><button type="button" class="btn" data-act="decrement" aria-label="${esc(nameOf(it.name))}を1個減らす">−</button><input type="text" inputmode="numeric" enterkeyhint="next" data-f="owned" aria-label="所持数" placeholder="無制限" autocomplete="off" value="${esc(it.owned)}"><button type="button" class="btn" data-act="increment" aria-label="${esc(nameOf(it.name))}を1個増やす">＋</button></div></td>
         <td class="c-rev" data-label="展示収益"><input type="text" inputmode="numeric" enterkeyhint="next" data-f="rev" aria-label="展示収益" autocomplete="off" value="${esc(it.rev)}"></td>
         <td class="c-size" data-label="縦"><input type="text" inputmode="numeric" enterkeyhint="next" data-f="h" aria-label="縦" autocomplete="off" value="${esc(it.h)}"></td>
         <td class="c-size" data-label="横"><input type="text" inputmode="numeric" enterkeyhint="next" data-f="w" aria-label="横" autocomplete="off" value="${esc(it.w)}"></td>
@@ -1782,6 +1858,19 @@ function runSolver(payload, report) {
   });
 
   el.tbody.addEventListener('click', (e) => {
+    const step = e.target.closest('[data-act="increment"], [data-act="decrement"]');
+    if (step && !step.disabled) {
+      const it = state.items.find((x) => x.id === Number(step.closest('tr').dataset.id));
+      if (!it) return;
+      const action = step.dataset.act;
+      stepOwned(it, action === 'increment' ? 1 : -1);
+      save();
+      renderTable();
+      markStale();
+      const same = rows.get(it.id).querySelector(`[data-act="${action}"]`);
+      (same.disabled ? rows.get(it.id).querySelector('[data-act="increment"]') : same).focus({ preventScroll: true });
+      return;
+    }
     const btn = e.target.closest('[data-act="del"]');
     if (!btn) return;
     const id = Number(btn.closest('tr').dataset.id);
