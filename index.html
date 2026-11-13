@@ -398,7 +398,7 @@
   </div>
   <p class="hint" id="inventoryMsg" role="status"></p>
   <div id="catalogPanel" role="tabpanel" aria-labelledby="catalogTab">
-    <p class="hint">持っているアイテムを選んで「所持アイテムに追加」を押してください。所持数1で追加されます。</p>
+    <p class="hint">「所持アイテムに追加」を押すたびに、所持数が1個ずつ増えます。</p>
     <label class="catalog-search" for="catalogSearch">アイテム名で検索<input id="catalogSearch" type="text" placeholder="例：夜光杯" autocomplete="off"></label>
     <p class="hint" id="catalogCount"></p>
     <div class="catalog-grid" id="catalogGrid"></div>
@@ -1374,11 +1374,13 @@ function runSolver(payload, report) {
 
   function renderCatalog() {
     const query = $('#catalogSearch').value.trim().normalize('NFKC').toLocaleLowerCase('ja');
-    const have = new Set(state.items.map((it) => baseName(it.name)));
     const visible = ALL_ORANGE_ROWS.map((r, i) => ({ r, i })).filter(({ r }) => r[0].normalize('NFKC').toLocaleLowerCase('ja').includes(query));
     $('#catalogGrid').innerHTML = visible.map(({ r, i }) => {
-      const added = have.has(baseName(r[0]));
-      return `<article class="catalog-card"><div class="namecell"><span class="ico" data-ico="${r[4]}" aria-hidden="true" style="background-position:${iconPos(r[4])}">${esc(firstChar(r[0]))}</span><span>${esc(r[0])}</span></div><dl><dt>展示収益</dt><dd>${fmt(r[1])}</dd><dt>サイズ（縦×横）</dt><dd>${r[2]} × ${r[3]}</dd><dt>展示効率</dt><dd>${fmt(r[1] / (r[2] * r[3]))}</dd></dl><button type="button" class="btn${added ? '' : ' primary'}" data-catalog="${i}" aria-label="${esc(r[0])}を所持アイテムに追加"${added ? ' disabled' : ''}>${added ? '追加済み' : '所持アイテムに追加'}</button></article>`;
+      const matching = state.items.filter((it) => baseName(it.name) === baseName(r[0]));
+      const counts = matching.map((it) => parseIntStrict(it.owned));
+      const ownedLabel = matching.some((it) => it.owned.trim() === '') ? '無制限' :
+        counts.some((n) => n === null) ? '要確認' : `${fmt(counts.reduce((sum, n) => sum + n, 0))}個`;
+      return `<article class="catalog-card"><div class="namecell"><span class="ico" data-ico="${r[4]}" aria-hidden="true" style="background-position:${iconPos(r[4])}">${esc(firstChar(r[0]))}</span><span>${esc(r[0])}</span></div><dl><dt>展示収益</dt><dd>${fmt(r[1])}</dd><dt>サイズ（縦×横）</dt><dd>${r[2]} × ${r[3]}</dd><dt>展示効率</dt><dd>${fmt(r[1] / (r[2] * r[3]))}</dd><dt>所持数</dt><dd data-owned-count>${ownedLabel}</dd></dl><button type="button" class="btn primary" data-catalog="${i}" aria-label="${esc(r[0])}を所持アイテムに1個追加">所持アイテムに追加</button></article>`;
     }).join('');
     $('#catalogCount').textContent = `${visible.length} / ${ALL_ORANGE_ROWS.length}種類`;
     $('#catalogNoMatch').hidden = visible.length !== 0;
@@ -1389,15 +1391,21 @@ function runSolver(payload, report) {
     const button = e.target.closest('button[data-catalog]');
     if (!button) return;
     const r = ALL_ORANGE_ROWS[Number(button.dataset.catalog)];
-    if (!r || state.items.some((it) => baseName(it.name) === baseName(r[0]))) return;
-    state.items.push(newItem(r[0], r[1], r[2], r[3], '1'));
+    if (!r) return;
+    const existing = state.items.find((it) => baseName(it.name) === baseName(r[0]));
+    if (existing) {
+      const count = parseIntStrict(existing.owned);
+      existing.owned = String((count ?? 0) + 1);
+    } else {
+      state.items.push(newItem(r[0], r[1], r[2], r[3], '1'));
+    }
     save();
     renderTable();
     markStale();
-    $('#inventoryMsg').textContent = `${r[0]}を所持数1で追加しました。「所持アイテム」タブで数を変更できます。`;
-    // 追加で消えるボタンの次へ、キーボードフォーカスを引き継ぐ。
-    const next = $('#catalogGrid button:not(:disabled)');
-    if (next) next.focus({ preventScroll: true }); else $('#ownedTab').focus({ preventScroll: true });
+    const total = state.items.find((it) => baseName(it.name) === baseName(r[0])).owned;
+    $('#inventoryMsg').textContent = `${r[0]}を1個追加しました（所持数${fmt(total)}個）。`;
+    // 同じボタンを続けて押せるように、再描画後もフォーカスを保持する。
+    $(`#catalogGrid button[data-catalog="${button.dataset.catalog}"]`).focus({ preventScroll: true });
   });
 
   /* ---------- アイテム表の描画 ---------- */
@@ -1743,7 +1751,7 @@ function runSolver(payload, report) {
     if (!it) return;
     it[inp.dataset.f] = inp.value;
     updateRowMeta(tr, it);
-    if (inp.dataset.f === 'name') renderCatalog();
+    if (inp.dataset.f === 'name' || inp.dataset.f === 'owned') renderCatalog();
     save();
     markStale();
   });
