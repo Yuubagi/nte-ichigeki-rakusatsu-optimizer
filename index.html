@@ -245,6 +245,22 @@
   .stale { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+  .item-tabs { display:flex; gap:8px; border-bottom:1px solid var(--line); margin:16px 0; padding-bottom:8px; }
+  .item-tabs [aria-selected="true"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .catalog-search { display:block; max-width:420px; margin:16px 0; }
+  .catalog-search input { margin-top:4px; }
+  .catalog-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; margin-top:14px; }
+  .catalog-card { min-width:0; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .catalog-card .namecell { align-items:center; font-weight:600; overflow-wrap:anywhere; }
+  .catalog-card .ico { flex-shrink:0; width:48px; height:48px; }
+  .catalog-card dl { display:grid; grid-template-columns:1fr auto; font-size:13px; margin:0; gap:4px 10px; }
+  .catalog-card dt { color:var(--muted); } .catalog-card dd { margin:0; font-variant-numeric:tabular-nums; }
+  .catalog-card .btn { margin-top:auto; width:100%; }
+  .catalog-card .btn:disabled { color:var(--muted); cursor:default; background:var(--bg); border-color:var(--line); }
+  .inventory-empty { padding:24px 16px; border:1px dashed var(--line); border-radius:10px; text-align:center; margin:12px 0; }
+  .inventory-empty p { margin:0 0 12px; }
+  @media (max-width:640px) { .catalog-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } .catalog-card { padding:10px; } .catalog-card .namecell { flex-direction:column; align-items:flex-start; gap:6px; } .catalog-card .btn { padding:7px 4px; font-size:13px; } }
+
   /* アイテムの表 */
   /* アイテムの表の操作バー: 表をスクロールしている間も、画面の上に残る */
   .sticky-bar {
@@ -272,11 +288,6 @@
   td.auto { color: var(--muted); }
   input[aria-invalid="true"] { border-color: var(--warn); }
   .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
-
-  /* 初期の表が増えたときの案内 */
-  .update { margin: 0 0 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
-  .update p { margin: 0 0 8px; }
-  .update .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
   details.fold { margin-top: 20px; }
   details.fold summary { cursor: pointer; color: var(--accent); }
@@ -380,16 +391,28 @@
   <p class="note" id="note"></p>
 
   <section class="items-section" aria-labelledby="itemsHeading">
-  <h2 id="itemsHeading">アイテムの表</h2>
-  <div class="update" id="update" hidden aria-live="polite"></div>
-  <p class="hint">展示収益が確認できる橙品質39種類をまとめて追加できます。登録済みの行は変更せず、追加分の所持数は0にします。</p>
-  <p class="hint"><button type="button" class="btn" id="addAllOrange">橙品質の全アイテムを追加（39種）</button> <a href="https://ddangcalc.com/ja/items" target="_blank" rel="noopener noreferrer">データ出典：NTE一撃落札DB</a>（2026年11月13日確認）</p>
-  <p class="hint" id="presetMsg" role="status"></p>
+  <h2 id="itemsHeading">アイテム</h2>
+  <div class="item-tabs" role="tablist" aria-label="アイテムの管理">
+    <button type="button" class="btn" id="catalogTab" role="tab" aria-controls="catalogPanel" aria-selected="true">アイテム一覧</button>
+    <button type="button" class="btn" id="ownedTab" role="tab" aria-controls="ownedPanel" aria-selected="false" tabindex="-1">所持アイテム（0）</button>
+  </div>
+  <p class="hint" id="inventoryMsg" role="status"></p>
+  <div id="catalogPanel" role="tabpanel" aria-labelledby="catalogTab">
+    <p class="hint">持っているアイテムを選んで「所持アイテムに追加」を押してください。所持数1で追加されます。</p>
+    <label class="catalog-search" for="catalogSearch">アイテム名で検索<input id="catalogSearch" type="text" placeholder="例：夜光杯" autocomplete="off"></label>
+    <p class="hint" id="catalogCount"></p>
+    <div class="catalog-grid" id="catalogGrid"></div>
+    <p class="hint" id="catalogNoMatch" hidden>該当するアイテムがありません。</p>
+    <p class="hint">橙品質39種類 · <a href="https://ddangcalc.com/ja/items" target="_blank" rel="noopener noreferrer">データ出典：NTE一撃落札DB</a>（2026年11月13日確認）</p>
+  </div>
+  <div id="ownedPanel" role="tabpanel" aria-labelledby="ownedTab" hidden>
+  <p class="hint">所持数を入力して「計算する」を押してください。計算には、このタブのアイテムを使います。</p>
+  <div class="inventory-empty" id="ownedEmpty" hidden><p>所持アイテムはまだありません。</p><button type="button" class="btn" id="browseItems">アイテム一覧から追加する</button></div>
   <div class="sticky-bar">
     <div class="toolbar">
-      <button type="button" class="btn" id="addRow" aria-label="アイテムを追加"><span class="lg" aria-hidden="true">アイテムを追加</span><span class="sm" aria-hidden="true">追加</span></button>
+      <button type="button" class="btn" id="addRow" aria-label="独自アイテムを追加"><span class="lg" aria-hidden="true">独自アイテムを追加</span><span class="sm" aria-hidden="true">追加</span></button>
       <button type="button" class="btn" id="sortRows" aria-label="効率の高い順に並べる"><span class="lg" aria-hidden="true">効率の高い順に並べる</span><span class="sm" aria-hidden="true">効率順</span></button>
-      <button type="button" class="btn quiet" id="resetRows" aria-label="初期の表に戻す"><span class="lg" aria-hidden="true">初期の表に戻す</span><span class="sm" aria-hidden="true">初期化</span></button>
+      <button type="button" class="btn quiet" id="resetRows" aria-label="所持アイテムを空にする"><span class="lg" aria-hidden="true">すべて削除</span><span class="sm" aria-hidden="true">全削除</span></button>
       <button type="button" class="btn primary push" id="solveBtn">計算する</button>
     </div>
   </div>
@@ -411,10 +434,9 @@
     </table>
   </div>
   <p class="hint">縦・横は、アイテムが盤面の縦方向・横方向に占めるマス数です。展示効率は、1マスあたりの展示収益です。</p>
-  </section>
 
   <details class="fold">
-    <summary>表を一括で貼り付ける・書き出す</summary>
+    <summary>所持アイテムを一括で貼り付ける・書き出す</summary>
     <p class="hint">1行に1アイテムで、列は次の順に並べます。表計算ソフト(ExcelやGoogleスプレッドシート)で範囲をコピーして貼り付けると、そのまま読み取れます。</p>
     <p class="format"><span>アイテム名</span><span>展示収益</span><span>縦</span><span>横</span><span>所持数(省略可)</span></p>
     <ul class="hint spec">
@@ -431,6 +453,9 @@
     </div>
     <p class="hint" id="bulkMsg" aria-live="polite">表を置き換えても、同じ名前のアイテムの所持数は引き継がれます。</p>
   </details>
+
+  </div>
+  </section>
 
   <details class="fold">
     <summary>結果の見方</summary>
@@ -1024,7 +1049,7 @@ function runSolver(payload, report) {
   const MAX_ITEMS = 99; // 配置できる個数の上限(固定)
   const MAX_REVENUE = 1e12; // 展示収益として受け付ける最大値(これを超える入力は、不備として扱う)
 
-  // 初期の表を増やしたら、そのときのゲームのバージョンにする(保存済みの表に、あとから増えた分を案内するために使う)
+  // 保存データ内のゲームのバージョン（旧形式からの引き継ぎにも使用）
   const DEFAULTS_VERSION = '1.5';
   const BASE_VERSION = '1.3'; // 公開時の表のバージョン。版を保存していない古いデータは、これとして扱う
 
@@ -1119,7 +1144,6 @@ function runSolver(payload, report) {
     breakdownFoot: $('#breakdownFoot'),
     emptyMsg: $('#emptyMsg'),
     stale: $('#stale'),
-    update: $('#update'),
     notice: $('#notice'),
     tbody: $('#itemBody'),
     bulk: $('#bulk'),
@@ -1150,7 +1174,7 @@ function runSolver(payload, report) {
 
   function defaultState() {
     nextId = 1;
-    return { v: DEFAULTS_VERSION, items: DEFAULT_ROWS.map((r) => newItem(r[0], r[1], r[2], r[3])) };
+    return { v: DEFAULTS_VERSION, inventory: true, items: [] };
   }
 
   function load() {
@@ -1160,7 +1184,14 @@ function runSolver(payload, report) {
       const d = JSON.parse(raw);
       if (!d || !Array.isArray(d.items)) return null;
       nextId = 1;
-      return { v: typeof d.v === 'string' ? d.v : BASE_VERSION, items: d.items.map((i) => newItem(i.name ?? '', i.rev ?? '', i.h ?? '', i.w ?? '', i.owned ?? '')) };
+      // 旧形式の未編集・所持数0のプリセット行だけを除き、入力済みの値は保持する。
+      const items = d.inventory ? d.items : d.items.filter((i) => {
+        const name = String(i.name ?? '').trim().replace(/^[「『]+|[」』]+$/g, '').trim();
+        const preset = ALL_ORANGE_ROWS.find((r) => r[0] === name);
+        return String(i.owned ?? '').trim() !== '0' || !preset ||
+          String(i.rev) !== String(preset[1]) || String(i.h) !== String(preset[2]) || String(i.w) !== String(preset[3]);
+      });
+      return { v: typeof d.v === 'string' ? d.v : BASE_VERSION, inventory: true, items: items.map((i) => newItem(i.name ?? '', i.rev ?? '', i.h ?? '', i.w ?? '', i.owned ?? '')) };
     } catch (e) {
       return null;
     }
@@ -1168,7 +1199,7 @@ function runSolver(payload, report) {
 
   function save() {
     try {
-      const data = { v: state.v, items: state.items.map(({ name, rev, h, w, owned }) => ({ name, rev, h, w, owned })) };
+      const data = { v: state.v, inventory: true, items: state.items.map(({ name, rev, h, w, owned }) => ({ name, rev, h, w, owned })) };
       localStorage.setItem(STORE_KEY, JSON.stringify(data));
     } catch (e) { /* 保存できない環境では何もしない */ }
   }
@@ -1318,6 +1349,57 @@ function runSolver(payload, report) {
     });
   }
 
+  /* ---------- 一覧と所持アイテムのタブ ---------- */
+  function selectItemTab(tab) {
+    for (const name of ['catalog', 'owned']) {
+      const active = name === tab;
+      $('#' + name + 'Tab').setAttribute('aria-selected', String(active));
+      $('#' + name + 'Tab').tabIndex = active ? 0 : -1;
+      $('#' + name + 'Panel').hidden = !active;
+    }
+  }
+  for (const name of ['catalog', 'owned']) {
+    const tab = $('#' + name + 'Tab');
+    tab.addEventListener('click', () => selectItemTab(name));
+    tab.addEventListener('keydown', (e) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
+      const next = e.key === 'Home' ? 'catalog' : e.key === 'End' ? 'owned' : name === 'catalog' ? 'owned' : 'catalog';
+      selectItemTab(next);
+      $('#' + next + 'Tab').focus();
+    });
+  }
+  $('#browseItems').addEventListener('click', () => { selectItemTab('catalog'); $('#catalogSearch').focus(); });
+  $('#catalogSearch').addEventListener('input', renderCatalog);
+
+  function renderCatalog() {
+    const query = $('#catalogSearch').value.trim().normalize('NFKC').toLocaleLowerCase('ja');
+    const have = new Set(state.items.map((it) => baseName(it.name)));
+    const visible = ALL_ORANGE_ROWS.map((r, i) => ({ r, i })).filter(({ r }) => r[0].normalize('NFKC').toLocaleLowerCase('ja').includes(query));
+    $('#catalogGrid').innerHTML = visible.map(({ r, i }) => {
+      const added = have.has(baseName(r[0]));
+      return `<article class="catalog-card"><div class="namecell"><span class="ico" data-ico="${r[4]}" aria-hidden="true" style="background-position:${iconPos(r[4])}">${esc(firstChar(r[0]))}</span><span>${esc(r[0])}</span></div><dl><dt>展示収益</dt><dd>${fmt(r[1])}</dd><dt>サイズ（縦×横）</dt><dd>${r[2]} × ${r[3]}</dd><dt>展示効率</dt><dd>${fmt(r[1] / (r[2] * r[3]))}</dd></dl><button type="button" class="btn${added ? '' : ' primary'}" data-catalog="${i}" aria-label="${esc(r[0])}を所持アイテムに追加"${added ? ' disabled' : ''}>${added ? '追加済み' : '所持アイテムに追加'}</button></article>`;
+    }).join('');
+    $('#catalogCount').textContent = `${visible.length} / ${ALL_ORANGE_ROWS.length}種類`;
+    $('#catalogNoMatch').hidden = visible.length !== 0;
+    $('#ownedTab').textContent = `所持アイテム（${state.items.length}）`;
+    $('#ownedEmpty').hidden = state.items.length !== 0;
+  }
+  $('#catalogGrid').addEventListener('click', (e) => {
+    const button = e.target.closest('button[data-catalog]');
+    if (!button) return;
+    const r = ALL_ORANGE_ROWS[Number(button.dataset.catalog)];
+    if (!r || state.items.some((it) => baseName(it.name) === baseName(r[0]))) return;
+    state.items.push(newItem(r[0], r[1], r[2], r[3], '1'));
+    save();
+    renderTable();
+    markStale();
+    $('#inventoryMsg').textContent = `${r[0]}を所持数1で追加しました。「所持アイテム」タブで数を変更できます。`;
+    // 追加で消えるボタンの次へ、キーボードフォーカスを引き継ぐ。
+    const next = $('#catalogGrid button:not(:disabled)');
+    if (next) next.focus({ preventScroll: true }); else $('#ownedTab').focus({ preventScroll: true });
+  });
+
   /* ---------- アイテム表の描画 ---------- */
   const rows = new Map(); // id -> tr
 
@@ -1351,6 +1433,7 @@ function runSolver(payload, report) {
       rows.set(it.id, tr);
       updateRowMeta(tr, it);
     }
+    renderCatalog();
   }
 
   /* ---------- 結果の表示 ---------- */
@@ -1503,82 +1586,13 @@ function runSolver(payload, report) {
     el.usedItems.textContent = '—';
     el.status.className = 'status idle';
     el.status.setAttribute('aria-live', 'polite');
-    el.status.textContent = '所持数を入力して「計算する」を押すと、展示収益が最大になる配置が表示されます。';
+    el.status.textContent = 'アイテム一覧から所持アイテムを追加し、所持数を入力して「計算する」を押してください。';
     renderBoard([], { H: BOARD_H, W: BOARD_W, info: new Map() });
     el.breakdown.hidden = true;
     el.emptyMsg.hidden = true;
     lastList = [];
     selectedId = null;
     applySelection();
-  }
-
-  /* ---------- 初期の表が増えたときの案内 ---------- */
-  // 保存済みの表には、あとから増えたアイテムが入っていない。勝手に足さず、案内して選んでもらう。
-  // 「今後は出さない」を選んでも、次に初期の表が増えたときは、また案内する(二度と出なくなることはない)
-  // バージョンの新旧(1.10 が 1.9 より新しくなるよう、数字ごとに比べる)
-  function isNewer(a, b) {
-    const x = String(a).split('.').map(Number);
-    const y = String(b).split('.').map(Number);
-    for (let i = 0; i < Math.max(x.length, y.length); i++) {
-      const d = (x[i] || 0) - (y[i] || 0);
-      if (d !== 0) return d > 0;
-    }
-    return false;
-  }
-
-  function pendingDefaults() {
-    const have = new Set(state.items.map((it) => baseName(it.name)));
-    return DEFAULT_ROWS.filter((r) => isNewer(r[5] || BASE_VERSION, state.v) && !have.has(r[0]));
-  }
-
-  function renderUpdateStep(text, buttons) {
-    el.update.hidden = false;
-    el.update.textContent = '';
-    const p = document.createElement('p');
-    p.textContent = text;
-    el.update.appendChild(p);
-    if (!buttons.length) return;
-    const bar = document.createElement('div');
-    bar.className = 'actions';
-    for (const [label, primary, onClick] of buttons) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = primary ? 'btn primary' : 'btn';
-      b.textContent = label;
-      b.addEventListener('click', onClick);
-      bar.appendChild(b);
-    }
-    el.update.appendChild(bar);
-  }
-
-  function showUpdateNote() {
-    const rows = pendingDefaults();
-    if (!rows.length) { el.update.hidden = true; el.update.textContent = ''; return; }
-    const vers = [...new Set(rows.map((r) => r[5] || BASE_VERSION))].sort((a, b) => (isNewer(a, b) ? 1 : -1));
-    const ver = vers.length > 1 ? `バージョン${vers[0]}〜${vers[vers.length - 1]}` : `バージョン${vers[0]}`;
-    renderUpdateStep(
-      `${ver}で、初期の表にアイテムが${rows.length}件増えました(${rows.map((r) => r[0]).join('、')})。いまの表はそのままで、この${rows.length}件を末尾に追加できます。`,
-      [['表に追加する', true, () => addPendingDefaults(rows)], ['今はしない', false, askHideUpdateNote]]
-    );
-  }
-
-  function addPendingDefaults(rows) {
-    for (const r of rows) state.items.push(newItem(r[0], r[1], r[2], r[3], '0')); // 所持数は0(持っていない)にする
-    state.v = DEFAULTS_VERSION;
-    save();
-    renderTable();
-    markStale();
-    renderUpdateStep(`${rows.length}件を表の末尾に追加しました。所持数は0(持っていない)で入れています。持っている数を入力してください。`, []);
-  }
-
-  function askHideUpdateNote() {
-    renderUpdateStep('この案内を、次回から出さないようにしますか?(次に初期の表が増えたときは、またお知らせします)',
-      [['今後は出さない', false, () => {
-        state.v = DEFAULTS_VERSION;
-        save();
-        renderUpdateStep('この案内を閉じました。あとからでも、アイテムの名前・展示収益・縦・横を入力して追加できます。「初期の表に戻す」でも最新の表になります(入力した所持数は消えます)。', []);
-      }], ['次回また出す', false, () => { el.update.hidden = true; el.update.textContent = ''; }]]
-    );
   }
 
   /* ---------- 計算の実行 ---------- */
@@ -1729,6 +1743,7 @@ function runSolver(payload, report) {
     if (!it) return;
     it[inp.dataset.f] = inp.value;
     updateRowMeta(tr, it);
+    if (inp.dataset.f === 'name') renderCatalog();
     save();
     markStale();
   });
@@ -1776,28 +1791,12 @@ function runSolver(payload, report) {
     renderTable();
   });
 
-  $('#addAllOrange').addEventListener('click', () => {
-    const have = new Set(state.items.map((it) => baseName(it.name)));
-    const missing = ALL_ORANGE_ROWS.filter((r) => !have.has(baseName(r[0])));
-    if (!missing.length) {
-      $('#presetMsg').textContent = '橙品質39種類はすべて登録済みです。';
-      return;
-    }
-    for (const r of missing) state.items.push(newItem(r[0], r[1], r[2], r[3], '0'));
-    save();
-    renderTable();
-    showUpdateNote();
-    markStale();
-    $('#presetMsg').textContent = `${missing.length}種類を追加しました。追加したアイテムの所持数は0です。持っている数を入力してください。登録済みの行と所持数はそのままです。`;
-  });
-
   $('#resetRows').addEventListener('click', () => {
-    if (!confirm('アイテムの表を初期の状態に戻します。入力した所持数も消えます。よろしいですか?')) return;
+    if (!confirm('所持アイテムをすべて削除します。よろしいですか?')) return;
     state = defaultState();
-    $('#presetMsg').textContent = '';
     save();
     renderTable();
-    showUpdateNote();
+    $('#inventoryMsg').textContent = '所持アイテムをすべて削除しました。';
     if (lastCtx) markStale(); else renderIdle();
   });
 
@@ -1960,7 +1959,8 @@ function runSolver(payload, report) {
   el.boardCaption.textContent = '盤面のアイテムや内訳の表の行をタップ(クリック)すると、そのアイテムが強調されます。';
   renderTable();
   renderIdle();
-  showUpdateNote();
+  selectItemTab(state.items.length ? 'owned' : 'catalog');
+  save();
 })();
 </script>
 </body>
