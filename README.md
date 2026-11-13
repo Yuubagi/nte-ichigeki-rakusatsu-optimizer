@@ -33,6 +33,12 @@
 
 計算の仕組み、「最適」と表示される条件、確認した内容、制限事項、画像の扱いは、[docs/details.md](docs/details.md) にまとめています。
 
-## 連絡先
+## 原作・開発元
 
-このツールの不具合やご意見は、製作者のXアカウント [@anko_monn](https://x.com/anko_monn) までご連絡ください。
+このツールは [Anko-monn氏のツール](https://github.com/Anko-monn/nte-ichigeki-rakusatsu-optimizer) を元にした非公式の改変版です。
+
+原作者：[@anko_monn](https://x.com/anko_monn)
+
+## 不具合・ご意見
+
+この改変版に関する不具合やご意見は、[このリポジトリのIssues](https://github.com/Yuubagi/nte-ichigeki-rakusatsu-optimizer/issues) へお願いします。
