@@ -2,7 +2,7 @@
 
 「一撃落札」の展示で、盤面にアイテムを並べたときの**展示収益の合計が最大になる配置**を求める、ブラウザだけで動くツールです。
 
-[ツールを開く](https://anko-monn.github.io/nte-ichigeki-rakusatsu-optimizer/)
+[ツールを開く](https://yuubagi.github.io/nte-ichigeki-rakusatsu-optimizer/)
 
 > NTE(Neverness to Everness)の非公式ファンツールです。ゲームの運営会社・開発元とは関係ありません。
 
